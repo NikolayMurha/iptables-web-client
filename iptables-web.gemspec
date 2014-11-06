@@ -16,10 +16,9 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
-  spec.add_runtime_dependency 'system-getifaddrs'
-  spec.add_runtime_dependency 'rvm'
-  spec.add_runtime_dependency 'activeresource'
-  spec.add_runtime_dependency 'commander'
+  spec.add_runtime_dependency 'system-getifaddrs', '~> 0.2.0'
+  spec.add_runtime_dependency 'activeresource', '~> 4.0.0'
+  spec.add_runtime_dependency 'commander', '~> 4.0.0'
   spec.add_development_dependency 'bundler', '~> 1.6'
-  spec.add_development_dependency 'rake'
+  spec.add_development_dependency 'rake', '~> 0'
 end
