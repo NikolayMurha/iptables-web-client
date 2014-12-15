@@ -7,7 +7,7 @@ module IptablesWeb
       def self.handshake
         node = find('current')
         node.ips = []
-        System.get_ifaddrs.each do |interface, config|
+        ::System.get_ifaddrs.each do |interface, config|
           next if interface.to_s.include?('lo')
           node.ips.push({
             interface: interface,

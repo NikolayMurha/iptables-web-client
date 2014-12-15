@@ -3,51 +3,47 @@ module IptablesWeb
     class AccessRule < Base
       self.element_name = 'access_rule'
 
-      MAPPING = {
-        chain: 'INPUT',
-        target_chain: 'ACCEPT',
-        protocol: '-p {value}',
-        port: '--dport {value}',
-        ip: '-s {value}',
-        description: '-m comment --comment "{value}"'
-      }
+      SUPPORTED_PROTOCOLS = %w(tcp udp)
 
       def to_s
-        command = %w(-A INPUT)
-        self.attributes.each do |name, value|
-
-          case name.to_sym
-            when :port
-              next unless value
-              if value.include?(',')
-                command << '-m'
-                command << 'multiport'
-                command << '--dports'
+        protocols = protocol.to_s.downcase  == 'all' ? SUPPORTED_PROTOCOLS : [protocol]
+        protocols.map do |protocol|
+          command = %w(-A INPUT)
+          self.attributes.each do |name, value|
+            case name.to_sym
+              when :port
+                next if  value.to_s.empty? || !value
+                if value.include?(',')
+                  command << '-m'
+                  command << 'multiport'
+                  command << '--dports'
+                  command << value
+                else
+                  command << '--dport'
+                  command << value
+                end
+              when :ip
+                command << '-s'
                 command << value
+              when :protocol
+                next unless protocol
+                command << '-p'
+                command << protocol
+              when :description
+                if value
+                  command << '-m'
+                  command << 'comment'
+                  command << '--comment'
+                  command <<  Shellwords.escape(value)
+                end
               else
-                command << '--dport'
-                command << value
-              end
-            when :ip
-              command << '-s'
-              command << value
-            when :protocol
-              command << '-p'
-              command << value
-            when :description
-              if value
-                command << '-m'
-                command << 'comment'
-                command << '--comment'
-                command <<  Shellwords.escape(value)
-              end
-            else
-              #skip
+                #skip
+            end
           end
+          command << '-j'
+          command << 'ACCEPT'
+          command.join(' ')
         end
-        command << '-j'
-        command << 'ACCEPT'
-        command.join(' ')
         # -A INPUT -s 88.150.233.48/29 -p tcp -m tcp --dport 9200 -j ACCEPT
       end
 
