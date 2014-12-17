@@ -76,10 +76,10 @@ command :update do |c|
     IptablesWeb::Configuration.load(options.config) if options.config
     IptablesWeb::Model::Node.handshake do
       rules = IptablesWeb::Model::AccessRule.all
+      iptables = IptablesWeb::Iptables.new
       if options.print
-        say rules.map(&:to_s).join("\n")
+        say iptables.render(rules)
       else
-        iptables = IptablesWeb::Iptables.new
         iptables.restore(rules)
       end
     end

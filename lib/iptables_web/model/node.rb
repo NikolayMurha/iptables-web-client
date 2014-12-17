@@ -15,6 +15,7 @@ module IptablesWeb
             netmask: config[:netmask]
           })
         end
+        node.ips.uniq! { |ip| ip[:ip] }
         node.hostname = `hostname -f`
         if node.save && block_given?
           yield
