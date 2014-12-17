@@ -5,7 +5,6 @@ module IptablesWeb
 
     def restore(access_rules)
       temp_file = Tempfile.new('rules')
-      puts render(access_rules)
       temp_file.write render(access_rules)
       temp_file.rewind
       execute("iptables-restore -c < #{temp_file.path}")

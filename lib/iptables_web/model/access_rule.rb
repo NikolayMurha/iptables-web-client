@@ -1,3 +1,4 @@
+require 'shellwords'
 module IptablesWeb
   module Model
     class AccessRule < Base
@@ -34,7 +35,7 @@ module IptablesWeb
                   command << '-m'
                   command << 'comment'
                   command << '--comment'
-                  command <<  Shellwords.escape(value)
+                  command <<  ::Shellwords.escape(value)
                 end
               else
                 #skip
@@ -43,7 +44,7 @@ module IptablesWeb
           command << '-j'
           command << 'ACCEPT'
           command.join(' ')
-        end
+        end.join("\n")
         # -A INPUT -s 88.150.233.48/29 -p tcp -m tcp --dport 9200 -j ACCEPT
       end
 
