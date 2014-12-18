@@ -27,7 +27,7 @@ module IptablesWeb
       lines = []
       lines << "*#{name}"
       lines << ':INPUT DROP [0:0]'
-      lines << ':FORWARD DROP [0:0]'
+      lines << ':FORWARD ACCEPT [0:0]'
       lines << ':OUTPUT ACCEPT [0:0]'
       lines << static_rules
       lines << Array(rules).map(&:to_s).join("\n")

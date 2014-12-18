@@ -10,6 +10,7 @@ default_command :update
 command :install do |c|
   c.syntax = 'iptables-web install'
   c.description = 'Displays foo'
+  c.option '--force', 'Force config '
   c.action do |args, options|
     config = IptablesWeb::Configuration.new
     api_url = ask('Api base url: ') { |q| q.default = config['api_base_url'] }
@@ -55,13 +56,14 @@ CONFIG
     say "* See 'iptables-save' format.\n"
     say "* * * * * * * * * * * * * * * * * * * * * * * * \n"
 
-    if File.exist?(static_rules)
+    if File.exist?(static_rules) && !options.force
       say 'File already exist!'
     else
       File.write static_rules, <<STATIC_RULES
 -A INPUT -i lo -j ACCEPT
+-A FORWARD -i lo -j ACCEPT
 -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
-# -A INPUT -p tcp ! --syn -m state --state NEW -j DROP
+-A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
 STATIC_RULES
     end
   end

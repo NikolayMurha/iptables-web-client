@@ -9,41 +9,45 @@ module IptablesWeb
       def to_s
         protocols = protocol.to_s.downcase  == 'all' ? SUPPORTED_PROTOCOLS : [protocol]
         protocols.map do |protocol|
-          command = %w(-A INPUT)
-          self.attributes.each do |name, value|
-            case name.to_sym
-              when :port
-                next if  value.to_s.empty? || !value
-                if value.include?(',')
-                  command << '-m'
-                  command << 'multiport'
-                  command << '--dports'
-                  command << value
+          self.resolved_ips.map do |ip|
+            command = %w(-A INPUT)
+            self.attributes.each do |name, value|
+              case name.to_sym
+                when :port
+                  next if  value.to_s.empty? || !value
+                  if value.include?(',')
+                    command << '-m'
+                    command << 'multiport'
+                    command << '--dports'
+                    command << value
+                  else
+                    command << '--dport'
+                    command << value
+                  end
+                # when :ip
+                #   command << '-s'
+                #   command << value
+                when :protocol
+                  next unless protocol
+                  command << '-p'
+                  command << protocol
+                when :description
+                  if value
+                    command << '-m'
+                    command << 'comment'
+                    command << '--comment'
+                    command <<  "\"#{::Shellwords.escape(value)}\""
+                  end
                 else
-                  command << '--dport'
-                  command << value
-                end
-              when :ip
-                command << '-s'
-                command << value
-              when :protocol
-                next unless protocol
-                command << '-p'
-                command << protocol
-              when :description
-                if value
-                  command << '-m'
-                  command << 'comment'
-                  command << '--comment'
-                  command <<  ::Shellwords.escape(value)
-                end
-              else
-                #skip
+                  #skip
+              end
             end
+            command << '-s'
+            command << ip
+            command << '-j'
+            command << 'ACCEPT'
+            command.join(' ')
           end
-          command << '-j'
-          command << 'ACCEPT'
-          command.join(' ')
         end.join("\n")
         # -A INPUT -s 88.150.233.48/29 -p tcp -m tcp --dport 9200 -j ACCEPT
       end
