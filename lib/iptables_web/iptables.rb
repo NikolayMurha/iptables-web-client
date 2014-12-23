@@ -7,7 +7,7 @@ module IptablesWeb
       temp_file = Tempfile.new('rules')
       temp_file.write render(access_rules)
       temp_file.rewind
-      execute("iptables-restore -c < #{temp_file.path}")
+      execute("/sbin/iptables-restore -c #{temp_file.path}")
     ensure
       if temp_file
         temp_file.close
