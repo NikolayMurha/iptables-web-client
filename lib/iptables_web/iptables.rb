@@ -25,20 +25,21 @@ module IptablesWeb
 
     def render(rules)
       static_rules = self.static_rules
+      static_filter = static_rules.delete('filter')
       lines = []
       lines << '*filter'
       lines << ':INPUT DROP [0:0]'
       lines << ':FORWARD ACCEPT [0:0]'
       lines << ':OUTPUT ACCEPT [0:0]'
-      lines << static_rules.delete('filter')
-      lines << Array(rules).map(&:to_s).join("\n")
-      lines << 'COMMIT'
+      lines << static_filter.strip if static_filter
+      lines << Array(rules).map(&:to_s).join("\n").strip
+      lines << "COMMIT\n"
       static_rules.each do |chain, sub_rules|
         lines << "*#{chain}"
-        lines << sub_rules.join("\n")
-        lines << 'COMMIT'
+        lines << sub_rules.join("\n").strip
+        lines << "COMMIT\n"
       end
-      lines.join("\n").gsub(/^\s*/, '')
+      lines.join("\n")
     end
   end
 end
