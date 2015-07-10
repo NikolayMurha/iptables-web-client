@@ -23,17 +23,22 @@ module IptablesWeb
       IptablesWeb::Configuration.static_rules
     end
 
-    def render(rules, name = 'filter')
+    def render(rules)
+      static_rules = self.static_rules
       lines = []
-      lines << "*#{name}"
+      lines << '*filter'
       lines << ':INPUT DROP [0:0]'
       lines << ':FORWARD ACCEPT [0:0]'
       lines << ':OUTPUT ACCEPT [0:0]'
-      lines << static_rules
+      lines << static_rules.delete('filter')
       lines << Array(rules).map(&:to_s).join("\n")
       lines << 'COMMIT'
-      lines << '#end'
-      lines.join("\n")
+      static_rules.each do |chain, sub_rules|
+        lines << "*#{chain}"
+        lines << sub_rules.join("\n")
+        lines << 'COMMIT'
+      end
+      lines.join("\n").gsub(/^\s*/, '')
     end
   end
 end

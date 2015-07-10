@@ -20,9 +20,14 @@ module IptablesWeb
     end
 
     def self.static_rules
-      STATIC_RULES_FILES.map do |file|
+      rules = STATIC_RULES_FILES.map do |file|
         File.exist?(file) ? File.read(file) : nil
       end.compact.join("\n").strip
+      rules.scan(/\*([a-z]+)(.*?)COMMIT/m).each_with_object({}) do |r, obj|
+        chain = r[0]
+        obj[chain] ||= []
+        obj[chain]  = obj[chain] | r[1].split("\n")
+      end
     end
 
     def self.config_dir

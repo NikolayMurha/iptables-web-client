@@ -60,10 +60,12 @@ CONFIG
       say 'File already exist!'
     else
       File.write static_rules, <<STATIC_RULES
+*filter
 -A INPUT -i lo -j ACCEPT
 -A FORWARD -i lo -j ACCEPT
 -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+COMMIT
 STATIC_RULES
     end
   end
@@ -75,7 +77,7 @@ command :update do |c|
   c.option '--config STRING', String, 'Path to config file'
   c.option '--print', 'Show rules without restoring'
   c.action do |_, options|
-    IptablesWeb::Configuration.load(options.config) if options.config
+    IptablesWeb.configuration.load(options.config) if options.config
     IptablesWeb::Model::Node.handshake do
       rules = IptablesWeb::Model::AccessRule.all
       iptables = IptablesWeb::Iptables.new
