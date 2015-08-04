@@ -32,7 +32,6 @@ module IptablesWeb
       lines << ':FORWARD ACCEPT [0:0]'
       lines << ':OUTPUT ACCEPT [0:0]'
       lines << static_filter.join("\n").strip if static_filter
-      lines << "\n"
       lines << Array(rules).map(&:to_s).join("\n").strip
       lines << "COMMIT\n"
       static_rules.each do |chain, sub_rules|

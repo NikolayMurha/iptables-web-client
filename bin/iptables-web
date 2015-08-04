@@ -76,15 +76,24 @@ command :update do |c|
   c.description = 'Display bar with optional prefix and suffix'
   c.option '--config STRING', String, 'Path to config file'
   c.option '--print', 'Show rules without restoring'
+  c.option '--force', 'Set rules omit checksum check'
   c.action do |_, options|
     IptablesWeb.configuration.load(options.config) if options.config
     IptablesWeb::Model::Node.handshake do
       rules = IptablesWeb::Model::AccessRule.all
       iptables = IptablesWeb::Iptables.new
+      last_checksum = rules.response.headers[:etag].first
       if options.print
+        say "Loading rules from #{IptablesWeb.configuration['api_base_url']}"
+        say 'Nothing changed.' if IptablesWeb::Configuration.checksum?(last_checksum)
         say iptables.render(rules)
       else
-        iptables.restore(rules)
+        if IptablesWeb::Configuration.checksum?(rules.response.headers[:etag].first) && !options.force
+          say 'Skip iptables update. Nothing changed.'
+        else
+          iptables.restore(rules)
+          IptablesWeb::Configuration.checksum = last_checksum
+        end
       end
     end
   end

@@ -4,9 +4,11 @@ module IptablesWeb
     attr_accessor :loaded
     CONFIG_FILES = %W(#{ENV['HOME']}/.iptables-web/config.yml /etc/iptables-web/config.yml)
     STATIC_RULES_FILES = %W(#{ENV['HOME']}/.iptables-web/static_rules /etc/iptables-web/static_rules)
+    CHECKSUM_FILE = "#{ENV['HOME']}/.iptables-web/checksum"
 
     def initialize
       CONFIG_FILES.each do |config|
+        puts "Load configuration from #{config}"
         if load(config)
           @loaded = true
           break
@@ -33,6 +35,14 @@ module IptablesWeb
       else
         { 'filter' => rules.split("\n") }
       end
+    end
+
+    def self.checksum?(checksum)
+      File.exists?(CHECKSUM_FILE) && File.read(CHECKSUM_FILE) == checksum
+    end
+
+    def self.checksum=(checksum)
+      File.write(CHECKSUM_FILE, checksum)
     end
 
     def self.config_dir
