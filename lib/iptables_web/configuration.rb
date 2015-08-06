@@ -1,30 +1,20 @@
 require 'yaml'
 module IptablesWeb
-  class Configuration < Hash
-    attr_accessor :loaded
-    CONFIG_FILES = %W(#{ENV['HOME']}/.iptables-web/config.yml /etc/iptables-web/config.yml)
-    STATIC_RULES_FILES = %W(#{ENV['HOME']}/.iptables-web/static_rules /etc/iptables-web/static_rules)
-    CHECKSUM_FILE = "#{ENV['HOME']}/.iptables-web/checksum"
-
-    def initialize
-      CONFIG_FILES.each do |config|
-        puts "Load configuration from #{config}"
-        if load(config)
-          @loaded = true
-          break
+  module Configuration
+    def reload
+      if File.exists?(config_path)
+        logged_say("Load config file #{config_path}")
+        YAML.load_file(config_path).each do |method, value|
+          send("#{method}=".to_sym, value)
         end
+      else
+        logged_say("Config file #{config_path} does not exist")
       end
     end
 
-    def load(config)
-      clear
-      merge! YAML.load File.read(config) if File.exist?(config)
-    end
-
-    def self.static_rules
-      rules = STATIC_RULES_FILES.map do |file|
-        File.exist?(file) ? File.read(file) : nil
-      end.compact.join("\n").strip
+    def static_rules
+      return {} unless static_rules?
+      rules = File.read(static_rules_path)
       chains = rules.scan(/\*([a-z]+)(.*?)COMMIT/m)
       if chains && chains.size > 0
         chains.each_with_object({}) do |r, obj|
@@ -37,16 +27,148 @@ module IptablesWeb
       end
     end
 
-    def self.checksum?(checksum)
-      File.exists?(CHECKSUM_FILE) && File.read(CHECKSUM_FILE) == checksum
+    def static_rules?
+      File.exist?(static_rules_path)
     end
 
-    def self.checksum=(checksum)
-      File.write(CHECKSUM_FILE, checksum)
+    def home
+      @home || ENV['HOME']
     end
 
-    def self.config_dir
-      File.join(ENV['HOME'], '.iptables-web')
+    def home=(home)
+      @home = home
+    end
+
+    def dir
+      @dir ||= begin
+        if root?
+          '/var/run/iptables_web'
+        else
+          File.expand_path(File.join(home, '.iptables-web'))
+        end
+      end
+    end
+
+    def dir=(d)
+      @dir = d
+    end
+
+    def path(path)
+      File.expand_path(path, dir)
+    end
+
+    def root?
+      Process::UID.eid == 0
+    end
+
+    #
+    def config_path
+      if root?
+        '/etc/iptables_web/config.yml'
+      else
+        path(@config_path || 'config.yml')
+      end
+    end
+
+    def config_path=(config_path)
+      @config_path = config_path
+    end
+
+    #
+    def pid_path
+      path(@pid_path || 'run.pid')
+    end
+
+    def pid_path=(pid_path)
+      @pid_path = pid_path
+    end
+
+    #
+    def log_path
+      if root?
+        '/var/log/iptables-web.log'
+      else
+        path(@log_path || 'run.log')
+      end
+    end
+
+    def log_path=(pid_path)
+      @log_path = pid_path
+      $terminal.reset if $terminal.present? && $terminal.is_a?(Cli::LoggedOutput)
+    end
+
+    #
+    def checksum_path
+      path(@checksum_path || 'checksum')
+    end
+
+    def checksum_path=(pid_path)
+      @checksum_path = pid_path
+    end
+
+    def checksum?(checksum)
+      File.exists?(checksum_path) && File.read(checksum_path) == make_checksum(checksum)
+    end
+
+    def checksum=(checksum)
+      File.write(checksum_path, make_checksum(checksum))
+    end
+
+    def make_checksum(check_sum)
+      check_sum = check_sum.to_s
+      check_sum += Digest::MD5.file(static_rules_path).hexdigest if static_rules?
+      Digest::MD5.hexdigest(check_sum)
+    end
+
+    #
+    def static_rules_path
+      if root?
+        '/etc/iptables_web/static_rules'
+      else
+        path(@static_rules_path || 'static_rules')
+      end
+    end
+
+    def static_rules_path=(static_rules_path)
+      @static_rules_path = static_rules_path
+    end
+
+    #
+    def api_base_url
+      # raise 'api_base_url is required' unless @api_base_url
+      @api_base_url
+    end
+
+    def api_base_url=(api_base_url)
+      @api_base_url = api_base_url
+      IptablesWeb::Model::Base.api_base_url = api_base_url
+    end
+
+    def access_token
+      raise 'Access_token is required' unless @access_token
+      @access_token
+    end
+
+    def access_token=(access_token)
+      @access_token = access_token
+      IptablesWeb::Model::Base.access_token = access_token
+    end
+
+    def pid_file(&block)
+      pid_file = Cli::PidFile.new(pid_path)
+      begin
+        pid_file.create
+        block.call(pid_file)
+        pid_file.delete
+      rescue Cli::PidFile::AnotherLaunched => e
+
+        pid_file.delete
+        logged_say(e.message)
+        return
+      rescue Exception => e
+        pid_file.delete
+        raise e
+      end
     end
   end
 end

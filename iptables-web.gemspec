@@ -20,6 +20,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'activeresource', '~> 4.0', '>= 4.0.0'
   spec.add_runtime_dependency 'commander', '~> 4.0', '>= 4.0.0'
   spec.add_runtime_dependency 'activeresource-response', '~> 1.0', '>= 1.1.1'
+  spec.add_runtime_dependency 'lockfile', '~> 2', '>= 2.1.3'
   spec.add_development_dependency 'bundler', '~> 1.6'
   spec.add_development_dependency 'rake', '~> 0'
 end

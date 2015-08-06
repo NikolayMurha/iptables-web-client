@@ -4,8 +4,15 @@ module IptablesWeb
     include IptablesWeb::Mixin::Sudo
 
     def restore(access_rules)
+      lines = combine(access_rules)
+      if lines.size == 0
+        logged_say('Skip restore because no rules found')
+        return
+      end
+
       temp_file = Tempfile.new('rules')
-      temp_file.write render(access_rules)
+      logged_say("Save rules to file #{temp_file.path}")
+      temp_file.write lines.join("\n")
       temp_file.rewind
       execute("/sbin/iptables-restore -c #{temp_file.path}")
     ensure
@@ -20,26 +27,37 @@ module IptablesWeb
     end
 
     def static_rules
-      IptablesWeb::Configuration.static_rules
+      IptablesWeb.static_rules
     end
 
-    def render(rules)
+    def combine(rules)
       static_rules = self.static_rules
       static_filter = static_rules.delete('filter')
+
+      filter_rules =[]
+      filter_rules = filter_rules | Array(static_filter)
+      filter_rules = filter_rules | Array(rules).map(&:to_s)
+      filter_rules.reject! { |r| r.strip.empty? }
       lines = []
-      lines << '*filter'
-      lines << ':INPUT DROP [0:0]'
-      lines << ':FORWARD ACCEPT [0:0]'
-      lines << ':OUTPUT ACCEPT [0:0]'
-      lines << static_filter.join("\n").strip if static_filter
-      lines << Array(rules).map(&:to_s).join("\n").strip
-      lines << "COMMIT\n"
+      if filter_rules.size > 0
+        lines << '*filter'
+        lines << ':INPUT DROP [0:0]'
+        lines << ':FORWARD ACCEPT [0:0]'
+        lines << ':OUTPUT ACCEPT [0:0]'
+        lines = lines | filter_rules
+        lines << "COMMIT\n"
+      end
+
       static_rules.each do |chain, sub_rules|
         lines << "*#{chain}"
         lines << sub_rules.join("\n").strip
         lines << "COMMIT\n"
       end
-      lines.join("\n")
+      lines
+    end
+
+    def render(rules)
+      combine(rules).join("\n")
     end
   end
 end

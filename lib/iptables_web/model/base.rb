@@ -5,9 +5,14 @@ module IptablesWeb
   module Model
     class Base < ActiveResource::Base
       add_response_method :response
-      def self.configure(config)
-        self.site = "#{config['api_base_url']}/api"
-        headers['X-Node-Access-Token'] = config['access_token']
+      class << self
+        def api_base_url=(api_base_url)
+          self.site = "#{api_base_url}/api"
+        end
+
+        def access_token=(access_token)
+          self.headers['X-Node-Access-Token'] = access_token
+        end
       end
     end
   end

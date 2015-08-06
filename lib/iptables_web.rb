@@ -1,3 +1,4 @@
+
 require 'iptables_web/version'
 require 'iptables_web/configuration'
 require 'system/getifaddrs'
@@ -8,20 +9,17 @@ require 'iptables_web/model/node'
 require 'iptables_web/crontab'
 require 'iptables_web/iptables'
 
-module IptablesWeb
-  class << self
-    attr_accessor :configuration
-    def configuration
-      self.configuration = Configuration.new unless @configuration
-      @configuration
-    end
+require 'commander'
+require 'iptables_web/cli/command/install'
+require 'iptables_web/cli/command/update'
+require 'iptables_web/cli/logged_output'
+require 'iptables_web/cli/import'
+require 'iptables_web/cli'
 
-    def configuration=(config)
-      @configuration = config
-      IptablesWeb::Model::Base.configure(config)
-      @configuration
-    end
-  end
+
+module IptablesWeb
+  extend Configuration
 end
 
-IptablesWeb.configuration =  IptablesWeb::Configuration.new #set default configuration
+IptablesWeb.reload
+
