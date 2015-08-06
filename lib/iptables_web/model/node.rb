@@ -11,8 +11,9 @@ module IptablesWeb
             block.call if block
           rescue Exception => e
             node.has_errors = true
-            node.report = e.message
-            node.report << e.backtrace.join("\n")
+            node.report = 'Exception: ' + e.message
+            node.report << "\n"
+            node.report << 'Backtrace: ' + e.backtrace.join("\n")
             raise e
           ensure
             # save node after updating
