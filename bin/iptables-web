@@ -3,4 +3,4 @@
 require 'system/getifaddrs'
 require 'iptables_web'
 require 'iptables_web/cli'
-IptablesWeb::Cli.new if $0 == __FILE__
+IptablesWeb::Cli.new

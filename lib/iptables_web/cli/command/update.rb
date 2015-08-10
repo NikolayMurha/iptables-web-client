@@ -12,7 +12,6 @@ module IptablesWeb
             c.option '--force', 'Set rules omit checksum check'
             c.action do |_, options|
               begin
-
                 IptablesWeb.configuration.load(options.config) if options.config
                 logged_say "Use iptables server #{IptablesWeb.api_base_url}"
                 IptablesWeb.pid_file do
