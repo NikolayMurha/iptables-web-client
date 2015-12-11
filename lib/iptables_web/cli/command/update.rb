@@ -26,6 +26,7 @@ module IptablesWeb
                       if IptablesWeb.checksum?(rules.response.headers[:etag].first) && !options.force
                         logged_say 'Skip iptables update. Nothing changed.'
                       else
+                        logged_say '*** Iptables updated! ***'
                         iptables.restore(rules)
                         IptablesWeb.checksum = last_checksum
                       end
