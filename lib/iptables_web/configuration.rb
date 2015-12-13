@@ -97,7 +97,15 @@ module IptablesWeb
       $terminal.reset if $terminal.present? && $terminal.is_a?(Cli::LoggedOutput)
     end
 
-    #
+    def log_level=(level)
+      @log_level = level
+      $terminal.reset if $terminal.present? && $terminal.is_a?(Cli::LoggedOutput)
+    end
+
+    def log_level
+      @log_level || ::Logger::INFO
+    end
+
     def checksum_path
       path(@checksum_path || 'checksum')
     end

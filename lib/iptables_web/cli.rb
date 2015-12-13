@@ -22,6 +22,10 @@ module IptablesWeb
         IptablesWeb.log_path = log_path
       end
 
+      global_option('--log_level LEVEL', 'Log level') do |log_level|
+        IptablesWeb.log_level = log_level
+      end
+
       global_option('--host URL', 'Server base url') do |server_base_url|
         IptablesWeb.api_base_url = server_base_url
       end

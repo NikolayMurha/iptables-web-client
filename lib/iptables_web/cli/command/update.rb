@@ -23,6 +23,7 @@ module IptablesWeb
                       logged_say 'Nothing changed.' if IptablesWeb.checksum?(last_checksum)
                       say iptables.render(rules)
                     else
+                      logged_say("Etag value: #{rules.response.headers[:etag].inspect}", ::Logger::DEBUG)
                       if IptablesWeb.checksum?(rules.response.headers[:etag].first) && !options.force
                         logged_say 'Skip iptables update. Nothing changed.'
                       else
