@@ -110,16 +110,21 @@ module IptablesWeb
       path(@checksum_path || 'checksum')
     end
 
+    def checksum
+      File.read(checksum_path) if File.exists?(checksum_path)
+    end
+
     def checksum_path=(pid_path)
       @checksum_path = pid_path
     end
 
-    def checksum?(checksum)
-      File.exists?(checksum_path) && File.read(checksum_path) == make_checksum(checksum)
+
+    def checksum?(etag)
+      checksum == make_checksum(etag)
     end
 
-    def checksum=(checksum)
-      File.write(checksum_path, make_checksum(checksum))
+    def checksum=(etag)
+      File.write(checksum_path, make_checksum(etag))
     end
 
     def make_checksum(check_sum)

@@ -29,8 +29,12 @@ module IptablesWeb
         @logger = nil
       end
 
-      def logged_say(message, log_level = Logger::INFO)
+      def logger_log(message, log_level = Logger::INFO)
         logger.log(log_level, message) if logger
+      end
+
+      def logged_say(message, log_level = Logger::INFO)
+        logger_log(message, log_level)
         say(message)
       end
     end

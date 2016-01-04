@@ -10,26 +10,34 @@ module IptablesWeb
             c.option '--config STRING', String, 'Path to config file'
             c.option '--print', 'Show rules without restoring'
             c.option '--force', 'Set rules omit checksum check'
+            c.option '--dry-run', 'Skip handshake'
             c.action do |_, options|
               begin
                 IptablesWeb.configuration.load(options.config) if options.config
                 logged_say "Use iptables server #{IptablesWeb.api_base_url}"
                 IptablesWeb.pid_file do
-                  IptablesWeb::Model::Node.handshake do
+                  IptablesWeb::Model::Node.handshake(options.dry_run || options.print) do
                     rules = IptablesWeb::Model::AccessRule.all
                     iptables = IptablesWeb::Iptables.new
-                    last_checksum = rules.response.headers[:etag].first
+                    request_etag = rules.response.headers[:etag].first
                     if options.print
-                      logged_say 'Nothing changed.' if IptablesWeb.checksum?(last_checksum)
+                      logged_say 'Run client in print mode'
+                      logged_say 'Nothing changed.' if IptablesWeb.checksum?(request_etag)
+                      logged_say "Previous checksum #{IptablesWeb.checksum}"
+                      logged_say "Current checksum #{IptablesWeb.make_checksum(request_etag)}"
                       say iptables.render(rules)
                     else
-                      logged_say("Etag value: #{rules.response.headers[:etag].inspect}", ::Logger::DEBUG)
-                      if IptablesWeb.checksum?(rules.response.headers[:etag].first) && !options.force
+                      logged_say 'Run client in DRY-RUN mode' if options.dry_run
+                      logged_say("Etag value: #{request_etag.inspect}", ::Logger::DEBUG)
+                      if IptablesWeb.checksum?(request_etag) && !options.force
                         logged_say 'Skip iptables update. Nothing changed.'
                       else
                         logged_say '*** Iptables updated! ***'
-                        iptables.restore(rules)
-                        IptablesWeb.checksum = last_checksum
+                        logger_log(iptables.render(rules), ::Logger::DEBUG)
+                        unless options.dry_run
+                          iptables.restore(rules)
+                          IptablesWeb.checksum = request_etag
+                        end
                       end
                     end
                   end
