@@ -28,7 +28,11 @@ module IptablesWeb
                 netmask: config[:netmask]
               })
             end
+            logged_say '*** Found interfaces!!! ***'
+            logger_log(node.ips.inspect, ::Logger::DEBUG)
             node.ips.uniq! { |ip| ip[:ip] }
+            logged_say '*** Unique interfaces!!! ***'
+            logger_log(node.ips.inspect, ::Logger::DEBUG)
             node.hostname = `hostname -f`
             node.save
           end
