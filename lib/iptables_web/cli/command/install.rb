@@ -3,28 +3,33 @@ module IptablesWeb
     module Command
       module Install
         def install_command
+          command :crontab do |c|
+
+          end
+
           command :install do |c|
             c.syntax = 'iptables-web install'
             c.description = 'Displays foo'
             c.option '--force', 'Force config '
             c.action do |args, options|
+              # TODO: Should be refactored
               config = IptablesWeb::Configuration.new
               api_url = ask('Api base url: ') { |q| q.default = config['api_base_url'] }
               token = ask('Access token: ') { |q| q.default = config['access_token'] }
               update_period = ask('Update every [min]', Integer) { |q| q.default = 1; q.in = 0..59 }
-              config_dir = IptablesWeb::Configuration.config_dir
+              config_path = IptablesWeb.config_path
+              config_dir = File.dirname(IptablesWeb.config_path)
               unless File.exist?(config_dir)
                 say "Create config directory: #{config_dir}"
-                Dir.mkdir(config_dir)
+                Dir.mkdir(File.dirname(config_dir))
               end
-              config_file = File.join(config_dir, 'config.yml')
-              say "Write config to #{config_file}"
-              File.write config_file, <<CONFIG
+              say "Write config to #{config_path}"
+              File.write config_path, <<CONFIG
 api_base_url: #{api_url}
 access_token: #{token}
 CONFIG
               if system("LANG=C bash -l -c \"type rvm | cat | head -1 | grep -q '^rvm is a function$'\"")
-                wrapper = "#{ENV['HOME']}/.rvm/wrappers/#{`rvm current`.strip}/iptables-web"
+                wrapper = 'rvm system do iptables-web'
               else
                 wrapper = 'iptables-web'
               end
@@ -33,7 +38,7 @@ CONFIG
               say "Write file #{cron_file}"
               File.write cron_file, <<CONFIG
 #/bin/env ruby
-#{wrapper} update
+#{wrapper}
 CONFIG
               File.chmod(0700, cron_file)
               say "Add cronjob #{cron_file}"
@@ -42,28 +47,6 @@ CONFIG
               jobs.reject! { |job| job.include?('.iptables-web') }
               jobs << "*/#{update_period} * * * * #{File.join(ENV['HOME'], '.iptables-web', 'cron.sh')}"
               crontab.save(jobs)
-
-              static_rules = File.join(config_dir, 'static_rules')
-
-              say "Create file for static rules #{static_rules}"
-              say "* * * * * * * * * * * * * * * * * * * * * * * *\n"
-              say "* You can write predefined rules to this file.\n"
-              say "* This file will be concat with rules \n"
-              say "* See 'iptables-save' format.\n"
-              say "* * * * * * * * * * * * * * * * * * * * * * * * \n"
-
-              if File.exist?(static_rules) && !options.force
-                say 'File already exist!'
-              else
-                File.write static_rules, <<STATIC_RULES
-*filter
--A INPUT -i lo -j ACCEPT
--A FORWARD -i lo -j ACCEPT
--A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
--A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
-COMMIT
-STATIC_RULES
-              end
             end
           end
         end

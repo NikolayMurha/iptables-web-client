@@ -18,12 +18,21 @@ module IptablesWeb
         IptablesWeb.reload
       end
 
-      global_option('--log_file FILE', 'Log file path') do |log_path|
+      global_option('--verbose', 'Combination of --log-level debug and --log-stdout') do |_|
+        IptablesWeb.log_level = ::Logger::INFO
+        IptablesWeb.log_stdout
+      end
+
+      global_option('--log-file FILE', 'Log file path') do |log_path|
         IptablesWeb.log_path = log_path
       end
 
-      global_option('--log_level LEVEL', 'Log level') do |log_level|
+      global_option('--log-level LEVEL', 'Log level') do |log_level|
         IptablesWeb.log_level = log_level
+      end
+
+      global_option('--log-stdout', 'Write log to stdout too') do |log_level|
+        IptablesWeb.log_stdout = log_level
       end
 
       global_option('--host URL', 'Server base url') do |server_base_url|

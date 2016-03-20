@@ -37,7 +37,7 @@ module IptablesWeb
       backup
       res = execute("bash #{bash_file.path}")
       unless $? == 0
-        logged_say('Failed to import settings. Restore previous configuration. See log for more details.', ::Logger::ERROR)
+        logger_log('Failed to import settings. Restore previous configuration. See log for more details.', ::Logger::ERROR)
         logger_log(res, ::Logger::ERROR)
         restore
       end
@@ -73,7 +73,7 @@ module IptablesWeb
       if m
         return rule if m[3].include?(LABEL)
         comment = "#{LABEL} #{m[3]}"
-        "#{m[1]} \"#{comment.strip}\" #{m[4]}"
+        "#{m[1]} \"#{comment.strip}\"#{m[4]}"
       else
         "#{rule} -m comment --comment \"#{LABEL}\""
       end

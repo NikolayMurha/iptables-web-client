@@ -8,8 +8,8 @@ module IptablesWeb
 
       def create
         raise AnotherLaunched.new("Another process with #{pid} already launched!") if another_exist?
-        logged_say("Create pidfile #{self} for pid #{Process.pid}")
-        logged_say("Grab pidfile #{self} for pid #{Process.pid} due process #{pid} is down.") if other?
+        logger_log("Create pidfile #{self} for pid #{Process.pid}")
+        logger_log("Grab pidfile #{self} for pid #{Process.pid} due process #{pid} is down.") if other?
         File.open(@pidfile, 'w') do |file|
           file.write(Process.pid)
         end
@@ -18,7 +18,7 @@ module IptablesWeb
 
       def delete
         raise AnotherLaunched.new("Delete error. Another process with #{pid} already launched!") if another_exist?
-        logged_say("Delete pidfile #{self} for pid #{pid}")
+        logger_log("Delete pidfile #{self} for pid #{pid}")
         File.unlink(@pidfile) if exist?
       end
 

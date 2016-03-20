@@ -1,21 +1,31 @@
 require 'yaml'
+require 'fileutils'
 module IptablesWeb
   module Configuration
     include IptablesWeb::Mixin::ConfigParser
 
     def reload
       if File.exists?(config_path)
-        logged_say("Load config file #{config_path}")
+        logger_log("Load config file #{config_path}")
         YAML.load_file(config_path).each do |method, value|
           send("#{method}=".to_sym, value)
         end
       else
-        logged_say("Config file #{config_path} does not exist")
+        logger_log("Config file #{config_path} does not exist")
       end
     end
 
     def static_rules
-      return {} unless static_rules?
+      unless static_rules?
+        return {
+          'filter' => [
+            '-A INPUT -i lo -j ACCEPT',
+            '-A FORWARD -i lo -j ACCEPT',
+            '-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT',
+            '-A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT'
+          ]
+        }
+      end
       rules = File.read(static_rules_path)
       parse_rules(rules)
     end
@@ -32,35 +42,28 @@ module IptablesWeb
       @home = home
     end
 
-    def dir
-      @dir ||= begin
-        if root?
-          '/var/run/iptables_web'
-        else
-          File.expand_path(File.join(home, '.iptables-web'))
-        end
+    def work_dir
+      @work_dir ||= begin
+        work_dir = '/tmp/iptables-web'
+        FileUtils.mkdir_p(work_dir) unless File.exist?(work_dir)
+        work_dir
       end
     end
 
-    def dir=(d)
-      @dir = d
+    def work_dir=(d)
+      @work_dir = d
     end
 
-    def path(path)
-      File.expand_path(path, dir)
+    def work_path(path)
+      File.expand_path(path, work_dir)
     end
 
     def root?
       Process::UID.eid == 0
     end
 
-    #
     def config_path
-      if root?
-        '/etc/iptables_web/config.yml'
-      else
-        path(@config_path || 'config.yml')
-      end
+      @config_path || '/etc/iptables-web/config.yml'
     end
 
     def config_path=(config_path)
@@ -69,7 +72,7 @@ module IptablesWeb
 
     #
     def pid_path
-      path(@pid_path || 'run.pid')
+      work_path(@pid_path || 'run.pid')
     end
 
     def pid_path=(pid_path)
@@ -78,29 +81,28 @@ module IptablesWeb
 
     #
     def log_path
-      if root?
-        '/var/log/iptables-web.log'
-      else
-        path(@log_path || 'run.log')
-      end
+      @log_path || '/var/log/iptables-web/run.log'
     end
 
     def log_path=(pid_path)
       @log_path = pid_path
-      $terminal.reset if $terminal.present? && $terminal.is_a?(Cli::LoggedOutput)
+      $terminal.reset if $terminal.present?
     end
 
     def log_level=(level)
-      @log_level = level
-      $terminal.log_level=level if $terminal.present? && $terminal.is_a?(Cli::LoggedOutput)
+      $terminal.log_level = level if $terminal.present?
+    end
+
+    def log_stdout
+      $terminal.log_stdout if $terminal.present?
     end
 
     def log_level
-      @log_level || ::Logger::INFO
+      $terminal.present? ? $terminal.log_level : ::Logger::INFO
     end
 
     def checksum_path
-      path(@checksum_path || 'checksum')
+      work_path(@checksum_path || 'checksum')
     end
 
     def checksum
@@ -126,20 +128,14 @@ module IptablesWeb
       Digest::MD5.hexdigest(check_sum)
     end
 
-    #
     def static_rules_path
-      if root?
-        '/etc/iptables_web/static_rules'
-      else
-        path(@static_rules_path || 'static_rules')
-      end
+      @static_rules_path || File.expand_path('static_rules', File.dirname(config_path))
     end
 
     def static_rules_path=(static_rules_path)
       @static_rules_path = static_rules_path
     end
 
-    #
     def api_base_url
       # raise 'api_base_url is required' unless @api_base_url
       @api_base_url
@@ -167,9 +163,8 @@ module IptablesWeb
         block.call(pid_file)
         pid_file.delete
       rescue Cli::PidFile::AnotherLaunched => e
-
         pid_file.delete
-        logged_say(e.message)
+        logger_log(e.message)
         return
       rescue Exception => e
         pid_file.delete
