@@ -3,19 +3,18 @@ module IptablesWeb
   module Model
     class AccessRule < Base
       self.element_name = 'access_rule'
-
       SUPPORTED_PROTOCOLS = %w(tcp udp)
 
-      def to_s
-        protocols = protocol.to_s.downcase  == 'all' ? SUPPORTED_PROTOCOLS : [protocol]
+      def make
+        protocols = protocol.to_s.downcase == 'all' ? SUPPORTED_PROTOCOLS : [protocol]
         protocols.map do |protocol|
           self.resolved_ips.map do |ip|
             command = %w(-A INPUT)
             self.attributes.each do |name, value|
               case name.to_sym
                 when :port
-                  next if  value.to_s.empty? || !value
-                  if value.include?(',')
+                  next if value.to_s.empty? || !value
+                  if value.match(/(:|,)/)
                     command << '-m'
                     command << 'multiport'
                     command << '--dports'
@@ -24,20 +23,18 @@ module IptablesWeb
                     command << '--dport'
                     command << value
                   end
-                # when :ip
-                #   command << '-s'
-                #   command << value
                 when :protocol
                   next unless protocol
                   command << '-p'
                   command << protocol
                 when :description
-                  if value
+                  if value && !value.empty?
                     command << '-m'
                     command << 'comment'
                     command << '--comment'
-                    command <<  "\"#{::Shellwords.escape(value)}\""
+                    command << "\"#{description.strip.gsub('"', '\"')}\""
                   end
+
                 else
                   #skip
               end
@@ -48,12 +45,7 @@ module IptablesWeb
             command << 'ACCEPT'
             command.join(' ')
           end
-        end.join("\n")
-        # -A INPUT -s 88.150.233.48/29 -p tcp -m tcp --dport 9200 -j ACCEPT
-      end
-
-      def mapping(parameter)
-
+        end
       end
     end
   end

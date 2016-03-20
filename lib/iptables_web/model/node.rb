@@ -17,7 +17,6 @@ module IptablesWeb
             raise e
           ensure
             return if dry_run
-            puts ''
             # save node after updating
             node.ips = []
             ::System.get_ifaddrs.each do |interface, config|
@@ -28,10 +27,10 @@ module IptablesWeb
                 netmask: config[:netmask]
               })
             end
-            logged_say '*** Found interfaces!!! ***'
+            logger_log('*** Found interfaces!!! ***', ::Logger::DEBUG)
             logger_log(node.ips.inspect, ::Logger::DEBUG)
             node.ips.uniq! { |ip| ip[:ip] }
-            logged_say '*** Unique interfaces!!! ***'
+            logger_log('*** Unique interfaces!!! ***', ::Logger::DEBUG)
             logger_log(node.ips.inspect, ::Logger::DEBUG)
             node.hostname = `hostname -f`
             node.save

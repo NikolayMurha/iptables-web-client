@@ -1,6 +1,8 @@
 require 'yaml'
 module IptablesWeb
   module Configuration
+    include IptablesWeb::Mixin::ConfigParser
+
     def reload
       if File.exists?(config_path)
         logged_say("Load config file #{config_path}")
@@ -15,16 +17,7 @@ module IptablesWeb
     def static_rules
       return {} unless static_rules?
       rules = File.read(static_rules_path)
-      chains = rules.scan(/\*([a-z]+)(.*?)COMMIT/m)
-      if chains && chains.size > 0
-        chains.each_with_object({}) do |r, obj|
-          chain = r[0]
-          obj[chain] ||= []
-          obj[chain] = obj[chain] | r[1].split("\n")
-        end
-      else
-        { 'filter' => rules.split("\n") }
-      end
+      parse_rules(rules)
     end
 
     def static_rules?
@@ -99,7 +92,7 @@ module IptablesWeb
 
     def log_level=(level)
       @log_level = level
-      $terminal.reset if $terminal.present? && $terminal.is_a?(Cli::LoggedOutput)
+      $terminal.log_level=level if $terminal.present? && $terminal.is_a?(Cli::LoggedOutput)
     end
 
     def log_level

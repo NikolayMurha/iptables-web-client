@@ -14,15 +14,17 @@ module IptablesWeb
       def logger
         @logger ||= begin
           logfile = IptablesWeb::log_path
-          log_level = IptablesWeb::log_level
-          log_level = LOG_LEVEL_MAP[log_level] if LOG_LEVEL_MAP[log_level]
-          log_level = log_level.to_i
           say("Open log file #{logfile}")
           logger =::Logger.new(logfile)
-          logger.level = log_level.to_i
           logger.formatter = ::Logger::Formatter.new
+          logger.level = IptablesWeb::log_level
           logger
         end
+      end
+
+      def log_level=(log_level)
+        log_level = LOG_LEVEL_MAP[log_level] if LOG_LEVEL_MAP[log_level]
+        logger.level = log_level.to_i
       end
 
       def reset
@@ -30,7 +32,7 @@ module IptablesWeb
       end
 
       def logger_log(message, log_level = Logger::INFO)
-        logger.log(log_level, message) if logger
+        logger.log(log_level, message.to_s.strip) if logger
       end
 
       def logged_say(message, log_level = Logger::INFO)

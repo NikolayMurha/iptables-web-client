@@ -22,7 +22,7 @@ module IptablesWeb
                     request_etag = rules.response.headers[:etag].first
                     if options.print
                       logged_say 'Run client in print mode'
-                      logged_say 'Nothing changed.' if IptablesWeb.checksum?(request_etag)
+                      logged_say '**** Nothing changed ****' if IptablesWeb.checksum?(request_etag)
                       logged_say "Previous checksum #{IptablesWeb.checksum}"
                       logged_say "Current checksum #{IptablesWeb.make_checksum(request_etag)}"
                       say iptables.render(rules)
@@ -33,9 +33,12 @@ module IptablesWeb
                         logged_say 'Skip iptables update. Nothing changed.'
                       else
                         logged_say '*** Iptables updated! ***'
-                        logger_log(iptables.render(rules), ::Logger::DEBUG)
-                        unless options.dry_run
-                          iptables.restore(rules)
+                        if options.dry_run
+                          logger_log('New rules:', ::Logger::DEBUG)
+                          logger_log(iptables.render(rules), ::Logger::DEBUG)
+                        else
+                          iptables.update(rules)
+                          logger_log(iptables.diff, ::Logger::DEBUG)
                           IptablesWeb.checksum = request_etag
                         end
                       end
