@@ -86,21 +86,21 @@ module IptablesWeb
     def diff
       if @backup
         @after = Tempfile.new('iptables-after')
-        execute("iptables-save > #{@after.path}")
-        execute("diff -c #{@backup.path} #{@after.path}")
+        execute("#{IPTABLES_SAVE_COMMAND} > #{@after.path}")
+        `diff -c #{@backup.path} #{@after.path}`
       end
     end
 
     def backup
       @backup ||= Tempfile.new('iptables-before')
       logger_log("Create backup #{@backup.path}\n", ::Logger::DEBUG)
-      execute("iptables-save > #{@backup.path}")
+      execute("#{IPTABLES_SAVE_COMMAND} > #{@backup.path}")
       @backup.rewind
     end
 
     def restore
       if @backup && File.exist?(@backup.path)
-        execute("/sbin/iptables-restore -c #{@backup.path}")
+        execute("#{IPTABLES_RESTORE_COMMAND} -c #{@backup.path}")
       end
     end
   end

@@ -34,7 +34,6 @@ module IptablesWeb
                     command << '--comment'
                     command << "\"#{description.strip.gsub('"', '\"')}\""
                   end
-
                 else
                   #skip
               end
