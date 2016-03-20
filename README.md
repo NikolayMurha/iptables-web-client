@@ -4,22 +4,11 @@ TODO: Write a gem description
 
 ## Installation
 
-Add this line to your application's Gemfile:
+Recommended installation on the server (system wide):
 
-    gem 'iptables-web'
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install iptables-web
-
-## Usage
-
-TODO: Write usage instructions here
-
+    sudo /usr/local/ruby/1.9.3/bin/gem install iptables-web
+    sudo ln -sf /usr/local/ruby/1.9.3/bin/iptables-web /usr/local/bin/iptables-web
+    
 ## Contributing
 
 1. Fork it ( https://github.com/[my-github-username]/iptables-web/fork )
