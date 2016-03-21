@@ -81,7 +81,7 @@ module IptablesWeb
 
     #
     def log_path
-      @log_path || '/var/log/iptables-web/run.log'
+      @log_path || '/var/log/iptables-web/update.log'
     end
 
     def log_path=(pid_path)

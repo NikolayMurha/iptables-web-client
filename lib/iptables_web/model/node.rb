@@ -1,3 +1,4 @@
+require 'yaml'
 module IptablesWeb
   module Model
     class Node < Base
@@ -28,10 +29,10 @@ module IptablesWeb
               })
             end
             logger_log('*** Found interfaces!!! ***', ::Logger::DEBUG)
-            logger_log(node.ips.inspect, ::Logger::DEBUG)
+            logger_log(YAML.dump(node.ips), ::Logger::DEBUG)
             node.ips.uniq! { |ip| ip[:ip] }
             logger_log('*** Unique interfaces!!! ***', ::Logger::DEBUG)
-            logger_log(node.ips.inspect, ::Logger::DEBUG)
+            logger_log(YAML.dump(node.ips), ::Logger::DEBUG)
             node.hostname = `hostname -f`
             node.save
           end
