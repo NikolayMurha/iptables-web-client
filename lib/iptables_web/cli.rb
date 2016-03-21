@@ -19,7 +19,7 @@ module IptablesWeb
       end
 
       global_option('--verbose', 'Combination of --log-level debug and --log-stdout') do |_|
-        IptablesWeb.log_level = ::Logger::INFO
+        IptablesWeb.log_level = ::Logger::DEBUG
         IptablesWeb.log_stdout
       end
 
