@@ -38,8 +38,8 @@ module IptablesWeb
       res = `bash #{bash_file.path} 2>&1`
       unless $? == 0
         logger_log('Failed to import settings. Restore previous configuration. See log for more details.', ::Logger::ERROR)
-        logger_log(res, ::Logger::ERROR)
         restore
+        raise res
       end
     ensure
       if bash_file
