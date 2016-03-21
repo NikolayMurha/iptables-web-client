@@ -1,3 +1,3 @@
 module IptablesWeb
-  VERSION = '0.3.5.pre5'
+  VERSION = '0.3.5.pre6'
 end
