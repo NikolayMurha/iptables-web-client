@@ -3,9 +3,9 @@ module IptablesWeb
   class Iptables
     LABEL = '[iptables-web]'
 
-    IPTABLES_COMMAND = 'iptables'
-    IPTABLES_SAVE_COMMAND = 'iptables-save'
-    IPTABLES_RESTORE_COMMAND = 'iptables-restore'
+    IPTABLES_COMMAND = '/sbin/iptables'
+    IPTABLES_SAVE_COMMAND = '/sbin/iptables-save'
+    IPTABLES_RESTORE_COMMAND = '/sbin/iptables-restore'
 
     include IptablesWeb::Mixin::Sudo
     include IptablesWeb::Mixin::ConfigParser
