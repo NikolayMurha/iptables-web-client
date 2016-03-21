@@ -42,8 +42,9 @@ module IptablesWeb
                   end
                 end
               rescue Exception => e
-                logger_log(e.message)
-                logger_log(e.backtrace.join("\n"))
+                logger_log(e.message, ::Logger::ERROR)
+                logger_log(e.backtrace.join("\n"), ::Logger::ERROR)
+                raise e
               end
             end
           end

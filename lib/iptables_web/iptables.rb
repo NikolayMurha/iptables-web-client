@@ -16,26 +16,26 @@ module IptablesWeb
       bash_file.write "set -e\n"
 
       lines = combine_new_rules(access_rules)
-      current_rules = parse_rules(execute('iptables-save'))
-      # set default policy to ACCEPT
-      bash_file.write "#{IPTABLES_COMMAND} -P INPUT ACCEPT\n"
+      current_rules = parse_rules(`#{sudo(IPTABLES_SAVE_COMMAND)}`)
+      bash_file.write sudo("#{sudo(IPTABLES_COMMAND)} -P INPUT ACCEPT")
+      bash_file.write "\n"
       current_rules.each do |table, rules|
         rules.each do |rule|
           next unless rule.include?(LABEL)
-          bash_file.write("#{IPTABLES_COMMAND} -t #{table} #{rule.gsub('-A', '-D')}")
-          bash_file.write("\n")
+          bash_file.write sudo("#{IPTABLES_COMMAND} -t #{table} #{rule.gsub('-A', '-D')}")
+          bash_file.write "\n"
         end
       end
       bash_file.write "# Create rules\n"
-      bash_file.write lines.join("\n")
+      bash_file.write lines.map { |l| sudo(l) }.join("\n")
       bash_file.write "\n"
-      # Close only if rules exist
       if lines.size > 0
-        bash_file.write "#{IPTABLES_COMMAND} -P INPUT DROP\n"
+        bash_file.write sudo("#{IPTABLES_COMMAND} -P INPUT DROP")
+        bash_file.write "\n"
       end
       bash_file.rewind
       backup
-      res = execute("bash #{bash_file.path}")
+      res = `bash #{bash_file.path}`
       unless $? == 0
         logger_log('Failed to import settings. Restore previous configuration. See log for more details.', ::Logger::ERROR)
         logger_log(res, ::Logger::ERROR)
@@ -49,7 +49,7 @@ module IptablesWeb
     end
 
     def save
-      execute(IPTABLES_SAVE_COMMAND).split("\n")
+      `#{sudo(IPTABLES_SAVE_COMMAND)}`.split("\n")
     end
 
     def static_rules
@@ -86,7 +86,7 @@ module IptablesWeb
     def diff
       if @backup
         @after = Tempfile.new('iptables-after')
-        execute("#{IPTABLES_SAVE_COMMAND} > #{@after.path}")
+        `#{sudo(IPTABLES_SAVE_COMMAND)} > #{@after.path}`
         `diff -c #{@backup.path} #{@after.path}`
       end
     end
@@ -94,13 +94,13 @@ module IptablesWeb
     def backup
       @backup ||= Tempfile.new('iptables-before')
       logger_log("Create backup #{@backup.path}\n", ::Logger::DEBUG)
-      execute("#{IPTABLES_SAVE_COMMAND} > #{@backup.path}")
+      `#{sudo(IPTABLES_SAVE_COMMAND)} > #{@backup.path}`
       @backup.rewind
     end
 
     def restore
       if @backup && File.exist?(@backup.path)
-        execute("#{IPTABLES_RESTORE_COMMAND} -c #{@backup.path}")
+        `#{sudo(IPTABLES_RESTORE_COMMAND)} -c #{@backup.path}`
       end
     end
   end

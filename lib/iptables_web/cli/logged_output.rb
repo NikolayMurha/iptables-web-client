@@ -42,10 +42,10 @@ module IptablesWeb
         logger.log(log_level, message.to_s.strip) if logger
       end
 
-      # def logger_log(message, log_level = Logger::INFO)
-      #   logger_log(message, log_level)
-      #   say(message)
-      # end
+      def logger_say(message, log_level = Logger::INFO)
+        logger_log(message, log_level)
+        say(message)
+      end
     end
   end
 end

@@ -1,11 +1,11 @@
 module IptablesWeb
   module Mixin
     module Sudo
-      def execute(command)
+      def sudo(command)
         if is_root? || command.include?('sudo')
-          `#{command}`
+          command
         else
-          `sudo #{command}`
+          "sudo #{command}"
         end
       end
 
